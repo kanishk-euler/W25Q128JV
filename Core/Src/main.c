@@ -58,12 +58,21 @@ static void MX_SPI2_Init(void);
 #define CMD_WRITE_ENABLE  0x06
 #define CMD_PAGE_PROGRAM  0x02
 #define CMD_READ          0x03
+#define CMD_SECTOR_ERASE  0x20
+#define CMD_WRITE_DISABLE 0x04
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 void W25Q128JV_WriteEnable(void) {
     uint8_t cmd = CMD_WRITE_ENABLE;
+    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET); // CS low
+    HAL_SPI_Transmit(&hspi2, &cmd, 1, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
+}
+
+void W25Q128JV_WriteDisable(void) {
+    uint8_t cmd = CMD_WRITE_DISABLE;
     HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET); // CS low
     HAL_SPI_Transmit(&hspi2, &cmd, 1, HAL_MAX_DELAY);
     HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
@@ -96,6 +105,21 @@ void Read(uint32_t address, uint8_t *data, uint16_t length) {
     HAL_SPI_Receive(&hspi2, data, length, HAL_MAX_DELAY);
     HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
 }
+
+
+void sectorerase(uint32_t address) {
+    W25Q128JV_WriteEnable();
+
+    uint8_t cmd[4];
+    cmd[0] = CMD_SECTOR_ERASE;
+    cmd[1] = (address >> 16) & 0xFF;
+    cmd[2] = (address >> 8) & 0xFF;
+    cmd[3] = address & 0xFF;
+
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET); // CS low
+    HAL_SPI_Transmit(&hspi2, cmd, 4, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET); // CS high
+}
 /* USER CODE END 0 */
 
 /**
@@ -118,8 +142,11 @@ int main(void)
       uint8_t data[] = {0xAA, 0xBB, 0xFF, 0xDD, 0xCC};
       uint8_t data_read[5];
 
+      sectorerase(0x500000);
+      Read(0x500000, data_read, sizeof(data));
       PageProgram(0x500000, data, sizeof(data));
       Read(0x500000, data_read, sizeof(data));
+
 
   /* USER CODE BEGIN Init */
 
