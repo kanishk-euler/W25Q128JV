@@ -55,15 +55,11 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI2_Init(void);
 /* USER CODE BEGIN PFP */
-#define CMD_WRITE_ENABLE  0x06
-#define CMD_PAGE_PROGRAM  0x02
-#define CMD_READ          0x03
-#define CMD_SECTOR_ERASE  0x20
-#define CMD_WRITE_DISABLE 0x04
-/* USER CODE END PFP */
+#define CMD_WRITE_ENABLE    0x06
+#define CMD_PAGE_PROGRAM    0x02
+#define CMD_READ            0x03
+#define CMD_CHIP_ERASE      0x20 // Chip Erase command
 
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
 void W25Q128JV_WriteEnable(void) {
     uint8_t cmd = CMD_WRITE_ENABLE;
     HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET); // CS low
@@ -71,8 +67,11 @@ void W25Q128JV_WriteEnable(void) {
     HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
 }
 
-void W25Q128JV_WriteDisable(void) {
-    uint8_t cmd = CMD_WRITE_DISABLE;
+void W25Q128JV_ChipErase(void) {
+    W25Q128JV_WriteEnable();
+
+    uint8_t cmd = CMD_CHIP_ERASE;
+
     HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET); // CS low
     HAL_SPI_Transmit(&hspi2, &cmd, 1, HAL_MAX_DELAY);
     HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
@@ -106,46 +105,28 @@ void Read(uint32_t address, uint8_t *data, uint16_t length) {
     HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
 }
 
+int main(void) {
+    HAL_Init();
+    SystemClock_Config();
+    MX_GPIO_Init();
+    MX_SPI2_Init();
 
-void sectorerase(uint32_t address) {
-    W25Q128JV_WriteEnable();
+    uint8_t data[] = {0xDD, 0xCC, 0xBB, 0xAA, 0xFF};
+    uint8_t data_read[5];
 
-    uint8_t cmd[4];
-    cmd[0] = CMD_SECTOR_ERASE;
-    cmd[1] = (address >> 16) & 0xFF;
-    cmd[2] = (address >> 8) & 0xFF;
-    cmd[3] = address & 0xFF;
+    // Perform a chip erase
+    W25Q128JV_ChipErase();
 
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET); // CS low
-    HAL_SPI_Transmit(&hspi2, cmd, 4, HAL_MAX_DELAY);
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET); // CS high
-}
-/* USER CODE END 0 */
+    HAL_Delay(100000);
+    // Read data from address 0x800000 after chip erase
+    Read(0x800000, data_read, sizeof(data));
 
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
-int main(void)
-{
-  /* USER CODE BEGIN 1 */
-  /* USER CODE END 1 */
+    // Write data to address 0x800000
+    PageProgram(0x800000, data, sizeof(data));
 
-  /* MCU Configuration--------------------------------------------------------*/
+    // Read data from address 0x800000 after writing
+    Read(0x800000, data_read, sizeof(data));
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
-      SystemClock_Config();
-      MX_GPIO_Init();
-      MX_SPI2_Init();
-
-      uint8_t data[] = {0xAA, 0xBB, 0xFF, 0xDD, 0xCC};
-      uint8_t data_read[5];
-
-      sectorerase(0x500000);
-      Read(0x500000, data_read, sizeof(data));
-      PageProgram(0x500000, data, sizeof(data));
-      Read(0x500000, data_read, sizeof(data));
 
 
   /* USER CODE BEGIN Init */
