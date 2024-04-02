@@ -32,6 +32,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
   char read_buffer[20];
+  char status_bits[8];
 
 /* USER CODE END PD */
 
@@ -55,10 +56,13 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI2_Init(void);
 /* USER CODE BEGIN PFP */
-#define CMD_WRITE_ENABLE    0x06
-#define CMD_PAGE_PROGRAM    0x02
-#define CMD_READ            0x03
-#define CMD_CHIP_ERASE      0x20 // Chip Erase command
+
+#define CMD_WRITE_ENABLE      0x06
+#define CMD_PAGE_PROGRAM      0x02
+#define CMD_READ              0x03
+#define CMD_CHIP_ERASE        0xC7 // Chip Erase command
+#define CMD_SECTOR_ERASE      0x20 // sector Erase command
+#define CMD_READ_STATUS_REG1  0x05 // Read Status Register-1 command
 
 void W25Q128JV_WriteEnable(void) {
     uint8_t cmd = CMD_WRITE_ENABLE;
@@ -76,6 +80,7 @@ void W25Q128JV_ChipErase(void) {
     HAL_SPI_Transmit(&hspi2, &cmd, 1, HAL_MAX_DELAY);
     HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
 }
+
 
 void PageProgram(uint32_t address, uint8_t *data, uint16_t length) {
     W25Q128JV_WriteEnable();
@@ -105,29 +110,64 @@ void Read(uint32_t address, uint8_t *data, uint16_t length) {
     HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
 }
 
+uint8_t ReadStatusRegister1(void) {
+    uint8_t cmd = CMD_READ_STATUS_REG1;
+    uint8_t status_reg1;
+
+    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET); // CS low
+    HAL_SPI_Transmit(&hspi2, &cmd, 1, HAL_MAX_DELAY);
+    HAL_SPI_Receive(&hspi2, &status_reg1, 1, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
+
+    return status_reg1;
+}
+
+void Sectorerase(uint32_t address) {
+    W25Q128JV_WriteEnable();
+//    uint8_t status_reg1_write;
+//    status_reg1_write = ReadStatusRegister1();
+//    uint8_t status_reg1_bits[8];
+//    for (int i = 0; i < 8; i++) {
+//        status_reg1_bits[i] = (status_reg1_write >> i) & 0x01;
+//    }
+//    while(status_reg1_bits[1]!= 1){
+//    	HAL_Delay(1);
+//    }
+
+    uint8_t cmd[4];
+    cmd[0] = CMD_SECTOR_ERASE;
+    cmd[1] = (address >> 16) & 0xFF;
+    cmd[2] = (address >> 8) & 0xFF;
+    cmd[3] = address & 0xFF;
+
+    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET); // CS low
+    HAL_SPI_Transmit(&hspi2, cmd, 4, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
+}
+
+
 int main(void) {
     HAL_Init();
     SystemClock_Config();
     MX_GPIO_Init();
     MX_SPI2_Init();
 
-    uint8_t data[] = {0xDD, 0xCC, 0xBB, 0xAA, 0xFF};
+uint8_t data[] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE};
+//uint8_t data[] = {0xDD, 0xCC, 0xBB, 0xAA, 0xFF};
     uint8_t data_read[5];
-
-    // Perform a chip erase
-    W25Q128JV_ChipErase();
-
-    HAL_Delay(100000);
-    // Read data from address 0x800000 after chip erase
+    uint8_t status_reg1_after_erase;
     Read(0x800000, data_read, sizeof(data));
-
-    // Write data to address 0x800000
+    Sectorerase(0x800000);
+    status_reg1_after_erase = ReadStatusRegister1();
+    uint8_t status_reg1_bits[8];
+    do{
+    	status_reg1_after_erase = ReadStatusRegister1();
+    for (int i = 0; i < 8; i++) {
+        status_reg1_bits[i] = (status_reg1_after_erase >> i) & 0x01;
+    }
+    }while (status_reg1_bits[0]!= 0);
     PageProgram(0x800000, data, sizeof(data));
-
-    // Read data from address 0x800000 after writing
     Read(0x800000, data_read, sizeof(data));
-
-
 
   /* USER CODE BEGIN Init */
 
@@ -143,15 +183,6 @@ int main(void) {
   /* Initialize all configured peripherals */
 
   /* USER CODE BEGIN 2 */
-//  //JEDECID
-
-//  HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET);
-//  HAL_SPI_Transmit_IT(&hspi2, (uint8_t *)&unique, 1);
-//  HAL_SPI_Receive(&hspi2, (uint8_t *)rec_buf, 5,100);
-//  HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET);
-
-
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
