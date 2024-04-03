@@ -145,29 +145,43 @@ void Sectorerase(uint32_t address) {
     HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
 }
 
+typedef struct {
+    int integer_data;
+    float float_data;
+    char character_data;
+    char string_data[20];
+} TestData;
 
 int main(void) {
-    HAL_Init();
+	HAL_Init();
     SystemClock_Config();
     MX_GPIO_Init();
     MX_SPI2_Init();
 
-uint8_t data[] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE};
-//uint8_t data[] = {0xDD, 0xCC, 0xBB, 0xAA, 0xFF};
-    uint8_t data_read[5];
+
+    // Define test data
+    TestData test_data = {
+        .integer_data = 123,
+        .float_data = 3.14,
+        .character_data = 'A',
+        .string_data = "Hello, Euler!"
+    };
+
+    TestData read_data;
     uint8_t status_reg1_after_erase;
-    Read(0x800000, data_read, sizeof(data));
-    Sectorerase(0x800000);
-    status_reg1_after_erase = ReadStatusRegister1();
-    uint8_t status_reg1_bits[8];
-    do{
-    	status_reg1_after_erase = ReadStatusRegister1();
-    for (int i = 0; i < 8; i++) {
-        status_reg1_bits[i] = (status_reg1_after_erase >> i) & 0x01;
-    }
-    }while (status_reg1_bits[0]!= 0);
-    PageProgram(0x800000, data, sizeof(data));
-    Read(0x800000, data_read, sizeof(data));
+
+    Read(0x500000, (uint8_t*)&read_data, sizeof(read_data));
+    Sectorerase(0x500000);
+        uint8_t status_reg1_bits[8];
+        do{
+        	status_reg1_after_erase = ReadStatusRegister1();
+        for (int i = 0; i < 8; i++) {
+            status_reg1_bits[i] = (status_reg1_after_erase >> i) & 0x01;
+        }
+        }while (status_reg1_bits[0]!= 0);
+    PageProgram(0x500000, (uint8_t*)&test_data, sizeof(test_data));
+
+    Read(0x500000, (uint8_t*)&read_data, sizeof(read_data));
 
   /* USER CODE BEGIN Init */
 

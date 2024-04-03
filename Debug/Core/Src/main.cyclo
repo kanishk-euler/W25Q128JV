@@ -4,8 +4,8 @@
 ../Core/Src/main.c:100:6:Read	1
 ../Core/Src/main.c:113:9:ReadStatusRegister1	1
 ../Core/Src/main.c:125:6:Sectorerase	1
-../Core/Src/main.c:149:5:main	3
-../Core/Src/main.c:209:6:SystemClock_Config	4
-../Core/Src/main.c:254:13:MX_SPI2_Init	2
-../Core/Src/main.c:294:13:MX_GPIO_Init	1
-../Core/Src/main.c:336:6:Error_Handler	1
+../Core/Src/main.c:155:5:main	3
+../Core/Src/main.c:223:6:SystemClock_Config	4
+../Core/Src/main.c:268:13:MX_SPI2_Init	2
+../Core/Src/main.c:308:13:MX_GPIO_Init	1
+../Core/Src/main.c:350:6:Error_Handler	1

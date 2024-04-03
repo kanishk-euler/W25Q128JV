@@ -7,45 +7,45 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .text         00002aac  08000194  08000194  00010194  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       00000048  08002c40  08002c40  00012c40  2**2
+  2 .rodata       00000060  08002c40  08002c40  00012c40  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .ARM.extab    00000000  08002c88  08002c88  0002000c  2**0
+  3 .ARM.extab    00000000  08002ca0  08002ca0  0002000c  2**0
                   CONTENTS
-  4 .ARM          00000000  08002c88  08002c88  0002000c  2**0
+  4 .ARM          00000000  08002ca0  08002ca0  0002000c  2**0
                   CONTENTS
-  5 .preinit_array 00000000  08002c88  08002c88  0002000c  2**0
+  5 .preinit_array 00000000  08002ca0  08002ca0  0002000c  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  6 .init_array   00000004  08002c88  08002c88  00012c88  2**2
+  6 .init_array   00000004  08002ca0  08002ca0  00012ca0  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  7 .fini_array   00000004  08002c8c  08002c8c  00012c8c  2**2
+  7 .fini_array   00000004  08002ca4  08002ca4  00012ca4  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  8 .data         0000000c  20000000  08002c90  00020000  2**2
+  8 .data         0000000c  20000000  08002ca8  00020000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  9 .bss          00000084  2000000c  08002c9c  0002000c  2**2
+  9 .bss          00000084  2000000c  08002cb4  0002000c  2**2
                   ALLOC
- 10 ._user_heap_stack 00000600  20000090  08002c9c  00020090  2**0
+ 10 ._user_heap_stack 00000600  20000090  08002cb4  00020090  2**0
                   ALLOC
  11 .ARM.attributes 00000030  00000000  00000000  0002000c  2**0
                   CONTENTS, READONLY
  12 .comment      00000043  00000000  00000000  0002003c  2**0
                   CONTENTS, READONLY
- 13 .debug_info   000076a8  00000000  00000000  0002007f  2**0
+ 13 .debug_info   000076eb  00000000  00000000  0002007f  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_abbrev 00001744  00000000  00000000  00027727  2**0
+ 14 .debug_abbrev 00001744  00000000  00000000  0002776a  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_aranges 000007e0  00000000  00000000  00028e70  2**3
+ 15 .debug_aranges 000007e0  00000000  00000000  00028eb0  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_rnglists 000005e4  00000000  00000000  00029650  2**0
+ 16 .debug_rnglists 000005e4  00000000  00000000  00029690  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_macro  00020478  00000000  00000000  00029c34  2**0
+ 17 .debug_macro  00020478  00000000  00000000  00029c74  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_line   00008cb2  00000000  00000000  0004a0ac  2**0
+ 18 .debug_line   00008cb3  00000000  00000000  0004a0ec  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_str    000c3cbc  00000000  00000000  00052d5e  2**0
+ 19 .debug_str    000c3cfd  00000000  00000000  00052d9f  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .debug_frame  00001ec8  00000000  00000000  00116a1c  2**2
+ 20 .debug_frame  00001ecc  00000000  00000000  00116a9c  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_line_str 0000006b  00000000  00000000  001188e4  2**0
+ 21 .debug_line_str 0000006b  00000000  00000000  00118968  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -339,13 +339,16 @@ void Sectorerase(uint32_t address) {
  80003a4:	20000028 	.word	0x20000028
 
 080003a8 <main>:
-
+    float float_data;
+    char character_data;
+    char string_data[20];
+} TestData;
 
 int main(void) {
- 80003a8:	b580      	push	{r7, lr}
- 80003aa:	b088      	sub	sp, #32
+ 80003a8:	b5b0      	push	{r4, r5, r7, lr}
+ 80003aa:	b094      	sub	sp, #80	; 0x50
  80003ac:	af00      	add	r7, sp, #0
-    HAL_Init();
+	HAL_Init();
  80003ae:	f000 fa10 	bl	80007d2 <HAL_Init>
     SystemClock_Config();
  80003b2:	f000 f84f 	bl	8000454 <SystemClock_Config>
@@ -354,74 +357,76 @@ int main(void) {
     MX_SPI2_Init();
  80003ba:	f000 f891 	bl	80004e0 <MX_SPI2_Init>
 
-uint8_t data[] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE};
- 80003be:	4a24      	ldr	r2, [pc, #144]	; (8000450 <main+0xa8>)
- 80003c0:	f107 0314 	add.w	r3, r7, #20
- 80003c4:	e892 0003 	ldmia.w	r2, {r0, r1}
- 80003c8:	6018      	str	r0, [r3, #0]
- 80003ca:	3304      	adds	r3, #4
- 80003cc:	7019      	strb	r1, [r3, #0]
-//uint8_t data[] = {0xDD, 0xCC, 0xBB, 0xAA, 0xFF};
-    uint8_t data_read[5];
+
+    // Define test data
+    TestData test_data = {
+ 80003be:	4b24      	ldr	r3, [pc, #144]	; (8000450 <main+0xa8>)
+ 80003c0:	f107 0428 	add.w	r4, r7, #40	; 0x28
+ 80003c4:	461d      	mov	r5, r3
+ 80003c6:	cd0f      	ldmia	r5!, {r0, r1, r2, r3}
+ 80003c8:	c40f      	stmia	r4!, {r0, r1, r2, r3}
+ 80003ca:	e895 000f 	ldmia.w	r5, {r0, r1, r2, r3}
+ 80003ce:	e884 000f 	stmia.w	r4, {r0, r1, r2, r3}
+    };
+
+    TestData read_data;
     uint8_t status_reg1_after_erase;
-    Read(0x800000, data_read, sizeof(data));
- 80003ce:	f107 030c 	add.w	r3, r7, #12
- 80003d2:	2205      	movs	r2, #5
- 80003d4:	4619      	mov	r1, r3
- 80003d6:	f44f 0000 	mov.w	r0, #8388608	; 0x800000
- 80003da:	f7ff ff55 	bl	8000288 <Read>
-    Sectorerase(0x800000);
- 80003de:	f44f 0000 	mov.w	r0, #8388608	; 0x800000
- 80003e2:	f7ff ffb1 	bl	8000348 <Sectorerase>
-    status_reg1_after_erase = ReadStatusRegister1();
- 80003e6:	f7ff ff87 	bl	80002f8 <ReadStatusRegister1>
- 80003ea:	4603      	mov	r3, r0
- 80003ec:	76fb      	strb	r3, [r7, #27]
-    uint8_t status_reg1_bits[8];
-    do{
-    	status_reg1_after_erase = ReadStatusRegister1();
- 80003ee:	f7ff ff83 	bl	80002f8 <ReadStatusRegister1>
- 80003f2:	4603      	mov	r3, r0
- 80003f4:	76fb      	strb	r3, [r7, #27]
-    for (int i = 0; i < 8; i++) {
- 80003f6:	2300      	movs	r3, #0
- 80003f8:	61fb      	str	r3, [r7, #28]
- 80003fa:	e00f      	b.n	800041c <main+0x74>
-        status_reg1_bits[i] = (status_reg1_after_erase >> i) & 0x01;
- 80003fc:	7efa      	ldrb	r2, [r7, #27]
- 80003fe:	69fb      	ldr	r3, [r7, #28]
+
+    Read(0x500000, (uint8_t*)&read_data, sizeof(read_data));
+ 80003d2:	f107 0308 	add.w	r3, r7, #8
+ 80003d6:	2220      	movs	r2, #32
+ 80003d8:	4619      	mov	r1, r3
+ 80003da:	f44f 00a0 	mov.w	r0, #5242880	; 0x500000
+ 80003de:	f7ff ff53 	bl	8000288 <Read>
+    Sectorerase(0x500000);
+ 80003e2:	f44f 00a0 	mov.w	r0, #5242880	; 0x500000
+ 80003e6:	f7ff ffaf 	bl	8000348 <Sectorerase>
+        uint8_t status_reg1_bits[8];
+        do{
+        	status_reg1_after_erase = ReadStatusRegister1();
+ 80003ea:	f7ff ff85 	bl	80002f8 <ReadStatusRegister1>
+ 80003ee:	4603      	mov	r3, r0
+ 80003f0:	f887 304b 	strb.w	r3, [r7, #75]	; 0x4b
+        for (int i = 0; i < 8; i++) {
+ 80003f4:	2300      	movs	r3, #0
+ 80003f6:	64fb      	str	r3, [r7, #76]	; 0x4c
+ 80003f8:	e010      	b.n	800041c <main+0x74>
+            status_reg1_bits[i] = (status_reg1_after_erase >> i) & 0x01;
+ 80003fa:	f897 204b 	ldrb.w	r2, [r7, #75]	; 0x4b
+ 80003fe:	6cfb      	ldr	r3, [r7, #76]	; 0x4c
  8000400:	fa42 f303 	asr.w	r3, r2, r3
  8000404:	b2db      	uxtb	r3, r3
  8000406:	f003 0301 	and.w	r3, r3, #1
  800040a:	b2d9      	uxtb	r1, r3
- 800040c:	1d3a      	adds	r2, r7, #4
- 800040e:	69fb      	ldr	r3, [r7, #28]
+ 800040c:	463a      	mov	r2, r7
+ 800040e:	6cfb      	ldr	r3, [r7, #76]	; 0x4c
  8000410:	4413      	add	r3, r2
  8000412:	460a      	mov	r2, r1
  8000414:	701a      	strb	r2, [r3, #0]
-    for (int i = 0; i < 8; i++) {
- 8000416:	69fb      	ldr	r3, [r7, #28]
+        for (int i = 0; i < 8; i++) {
+ 8000416:	6cfb      	ldr	r3, [r7, #76]	; 0x4c
  8000418:	3301      	adds	r3, #1
- 800041a:	61fb      	str	r3, [r7, #28]
- 800041c:	69fb      	ldr	r3, [r7, #28]
+ 800041a:	64fb      	str	r3, [r7, #76]	; 0x4c
+ 800041c:	6cfb      	ldr	r3, [r7, #76]	; 0x4c
  800041e:	2b07      	cmp	r3, #7
- 8000420:	ddec      	ble.n	80003fc <main+0x54>
-    }
-    }while (status_reg1_bits[0]!= 0);
- 8000422:	793b      	ldrb	r3, [r7, #4]
+ 8000420:	ddeb      	ble.n	80003fa <main+0x52>
+        }
+        }while (status_reg1_bits[0]!= 0);
+ 8000422:	783b      	ldrb	r3, [r7, #0]
  8000424:	2b00      	cmp	r3, #0
- 8000426:	d1e2      	bne.n	80003ee <main+0x46>
-    PageProgram(0x800000, data, sizeof(data));
- 8000428:	f107 0314 	add.w	r3, r7, #20
- 800042c:	2205      	movs	r2, #5
+ 8000426:	d1e0      	bne.n	80003ea <main+0x42>
+    PageProgram(0x500000, (uint8_t*)&test_data, sizeof(test_data));
+ 8000428:	f107 0328 	add.w	r3, r7, #40	; 0x28
+ 800042c:	2220      	movs	r2, #32
  800042e:	4619      	mov	r1, r3
- 8000430:	f44f 0000 	mov.w	r0, #8388608	; 0x800000
+ 8000430:	f44f 00a0 	mov.w	r0, #5242880	; 0x500000
  8000434:	f7ff feee 	bl	8000214 <PageProgram>
-    Read(0x800000, data_read, sizeof(data));
- 8000438:	f107 030c 	add.w	r3, r7, #12
- 800043c:	2205      	movs	r2, #5
+
+    Read(0x500000, (uint8_t*)&read_data, sizeof(read_data));
+ 8000438:	f107 0308 	add.w	r3, r7, #8
+ 800043c:	2220      	movs	r2, #32
  800043e:	4619      	mov	r1, r3
- 8000440:	f44f 0000 	mov.w	r0, #8388608	; 0x800000
+ 8000440:	f44f 00a0 	mov.w	r0, #5242880	; 0x500000
  8000444:	f7ff ff20 	bl	8000288 <Read>
   /* USER CODE BEGIN Init */
 
@@ -1221,7 +1226,7 @@ LoopForever:
   ldr r1, =_edata
  80007c0:	2000000c 	.word	0x2000000c
   ldr r2, =_sidata
- 80007c4:	08002c90 	.word	0x08002c90
+ 80007c4:	08002ca8 	.word	0x08002ca8
   ldr r2, =_sbss
  80007c8:	2000000c 	.word	0x2000000c
   ldr r4, =_ebss
@@ -2985,7 +2990,7 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *RCC_OscInitStruct)
  80011b8:	6013      	str	r3, [r2, #0]
  80011ba:	e013      	b.n	80011e4 <HAL_RCC_OscConfig+0x298>
  80011bc:	40021000 	.word	0x40021000
- 80011c0:	08002c48 	.word	0x08002c48
+ 80011c0:	08002c60 	.word	0x08002c60
  80011c4:	20000000 	.word	0x20000000
  80011c8:	20000004 	.word	0x20000004
  80011cc:	4ba0      	ldr	r3, [pc, #640]	; (8001450 <HAL_RCC_OscConfig+0x504>)
@@ -4375,7 +4380,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
  800195e:	bd80      	pop	{r7, pc}
  8001960:	40022000 	.word	0x40022000
  8001964:	40021000 	.word	0x40021000
- 8001968:	08002c48 	.word	0x08002c48
+ 8001968:	08002c60 	.word	0x08002c60
  800196c:	20000000 	.word	0x20000000
  8001970:	20000004 	.word	0x20000004
 
@@ -4580,7 +4585,7 @@ uint32_t HAL_RCC_GetSysClockFreq(void)
  8001a78:	4770      	bx	lr
  8001a7a:	bf00      	nop
  8001a7c:	40021000 	.word	0x40021000
- 8001a80:	08002c58 	.word	0x08002c58
+ 8001a80:	08002c70 	.word	0x08002c70
  8001a84:	00f42400 	.word	0x00f42400
  8001a88:	007a1200 	.word	0x007a1200
 
@@ -7663,10 +7668,10 @@ static HAL_StatusTypeDef SPI_EndRxTxTransaction(SPI_HandleTypeDef *hspi, uint32_
  8002c12:	4798      	blx	r3
  8002c14:	3601      	adds	r6, #1
  8002c16:	e7f2      	b.n	8002bfe <__libc_init_array+0x1e>
- 8002c18:	08002c88 	.word	0x08002c88
- 8002c1c:	08002c88 	.word	0x08002c88
- 8002c20:	08002c88 	.word	0x08002c88
- 8002c24:	08002c8c 	.word	0x08002c8c
+ 8002c18:	08002ca0 	.word	0x08002ca0
+ 8002c1c:	08002ca0 	.word	0x08002ca0
+ 8002c20:	08002ca0 	.word	0x08002ca0
+ 8002c24:	08002ca4 	.word	0x08002ca4
 
 08002c28 <_init>:
  8002c28:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
