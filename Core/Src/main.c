@@ -18,9 +18,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "fatfs.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "flash.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -31,9 +33,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-  char read_buffer[20];
-  char status_bits[8];
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -42,12 +41,15 @@
 
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi2;
+
 /* USER CODE BEGIN PV */
 
-//const uint8_t jedec = 0b10011111 ; //JEDEC ID
-const uint8_t jedec = 0x9F; // JEDEC ID in hexadecimal
-const uint8_t unique = 0x4B;
-//const uint8_t addr = 0x400000; //address
+FATFS FatFs;
+FRESULT fres;
+FIL SFLASHPath[];
+char buffer[512];
+char str[100] = {"Hello World\0"};
+int bw;
 
 /* USER CODE END PV */
 
@@ -57,131 +59,27 @@ static void MX_GPIO_Init(void);
 static void MX_SPI2_Init(void);
 /* USER CODE BEGIN PFP */
 
-#define CMD_WRITE_ENABLE      0x06
-#define CMD_PAGE_PROGRAM      0x02
-#define CMD_READ              0x03
-#define CMD_CHIP_ERASE        0xC7 // Chip Erase command
-#define CMD_SECTOR_ERASE      0x20 // sector Erase command
-#define CMD_READ_STATUS_REG1  0x05 // Read Status Register-1 command
+/* USER CODE END PFP */
 
-void W25Q128JV_WriteEnable(void) {
-    uint8_t cmd = CMD_WRITE_ENABLE;
-    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET); // CS low
-    HAL_SPI_Transmit(&hspi2, &cmd, 1, HAL_MAX_DELAY);
-    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
-}
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
 
-void W25Q128JV_ChipErase(void) {
-    W25Q128JV_WriteEnable();
+/* USER CODE END 0 */
 
-    uint8_t cmd = CMD_CHIP_ERASE;
+/**
+  * @brief  The application entry point.
+  * @retval int
+  */
+int main(void)
+{
+  /* USER CODE BEGIN 1 */
 
-    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET); // CS low
-    HAL_SPI_Transmit(&hspi2, &cmd, 1, HAL_MAX_DELAY);
-    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
-}
+  /* USER CODE END 1 */
 
+  /* MCU Configuration--------------------------------------------------------*/
 
-void PageProgram(uint32_t address, uint8_t *data, uint16_t length) {
-    W25Q128JV_WriteEnable();
-
-    uint8_t cmd[4];
-    cmd[0] = CMD_PAGE_PROGRAM;
-    cmd[1] = (address >> 16) & 0xFF;
-    cmd[2] = (address >> 8) & 0xFF;
-    cmd[3] = address & 0xFF;
-
-    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET); // CS low
-    HAL_SPI_Transmit(&hspi2, cmd, 4, HAL_MAX_DELAY);
-    HAL_SPI_Transmit(&hspi2, data, length, HAL_MAX_DELAY);
-    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
-}
-
-void Read(uint32_t address, uint8_t *data, uint16_t length) {
-    uint8_t cmd[4];
-    cmd[0] = CMD_READ;
-    cmd[1] = (address >> 16) & 0xFF;
-    cmd[2] = (address >> 8) & 0xFF;
-    cmd[3] = address & 0xFF;
-
-    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET); // CS low
-    HAL_SPI_Transmit(&hspi2, cmd, 4, HAL_MAX_DELAY);
-    HAL_SPI_Receive(&hspi2, data, length, HAL_MAX_DELAY);
-    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
-}
-
-uint8_t ReadStatusRegister1(void) {
-    uint8_t cmd = CMD_READ_STATUS_REG1;
-    uint8_t status_reg1;
-
-    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET); // CS low
-    HAL_SPI_Transmit(&hspi2, &cmd, 1, HAL_MAX_DELAY);
-    HAL_SPI_Receive(&hspi2, &status_reg1, 1, HAL_MAX_DELAY);
-    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
-
-    return status_reg1;
-}
-
-void Sectorerase(uint32_t address) {
-    W25Q128JV_WriteEnable();
-//    uint8_t status_reg1_write;
-//    status_reg1_write = ReadStatusRegister1();
-//    uint8_t status_reg1_bits[8];
-//    for (int i = 0; i < 8; i++) {
-//        status_reg1_bits[i] = (status_reg1_write >> i) & 0x01;
-//    }
-//    while(status_reg1_bits[1]!= 1){
-//    	HAL_Delay(1);
-//    }
-
-    uint8_t cmd[4];
-    cmd[0] = CMD_SECTOR_ERASE;
-    cmd[1] = (address >> 16) & 0xFF;
-    cmd[2] = (address >> 8) & 0xFF;
-    cmd[3] = address & 0xFF;
-
-    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET); // CS low
-    HAL_SPI_Transmit(&hspi2, cmd, 4, HAL_MAX_DELAY);
-    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET); // CS high
-}
-
-typedef struct {
-    int integer_data;
-    float float_data;
-    char character_data;
-    char string_data[20];
-} TestData;
-
-int main(void) {
-	HAL_Init();
-    SystemClock_Config();
-    MX_GPIO_Init();
-    MX_SPI2_Init();
-
-
-    // Define test data
-    TestData test_data = {
-        .integer_data = 123,
-        .float_data = 3.14,
-        .character_data = 'A',
-        .string_data = "Hello, Euler!"
-    };
-
-    TestData read_data;
-    uint8_t status_reg1_after_erase;
-
-    Read(0x500000, (uint8_t*)&read_data, sizeof(read_data));
-    Sectorerase(0x500000);
-        uint8_t status_reg1_bits[8];
-        do{
-        	status_reg1_after_erase = ReadStatusRegister1();
-        for (int i = 0; i < 8; i++) {
-            status_reg1_bits[i] = (status_reg1_after_erase >> i) & 0x01;
-        }
-        }while (status_reg1_bits[0]!= 0);
-    PageProgram(0x500000, (uint8_t*)&test_data, sizeof(test_data));
-
-    Read(0x500000, (uint8_t*)&read_data, sizeof(read_data));
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -195,8 +93,43 @@ int main(void) {
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-
+  MX_GPIO_Init();
+  MX_SPI2_Init();
+  MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
+  HAL_Delay(100);
+  FATFS_LinkDriver(&USER_Driver, SFLASHPath);
+
+  //Mount drive
+  fres = f_mount(&FatFs, &SFLASHPath, 0);
+  if (fres != FR_OK)
+  {
+    while(1);
+  }
+
+
+  fres = f_open(&SFLASHPath, "test", FA_CREATE_ALWAYS | FA_WRITE);
+  if (fres != FR_OK)
+  {
+ 	 while(1);
+  }
+  else
+  {
+	  fres = f_write(&SFLASHPath, &str, sizeof(str), bw);
+	  fres = f_close(&SFLASHPath);
+  }
+
+
+  fres = f_open(&SFLASHPath, "test", FA_READ);
+  if (fres != FR_OK)
+  {
+	  while(1);
+  }
+  else
+  {
+	  fres = f_read(&SFLASHPath, &buffer, 11, bw);
+  }
+  f_close(&SFLASHPath);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -211,11 +144,6 @@ int main(void) {
   /* USER CODE END 3 */
 }
 
-//  HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET);
-//  HAL_SPI_Transmit_IT(&hspi2, (uint8_t *)&unique, 1);
-//  HAL_SPI_Receive(&hspi2, (uint8_t *)rec_buf, 5,100);
-
-// Function to write a byte to SPI
 /**
   * @brief System Clock Configuration
   * @retval None
