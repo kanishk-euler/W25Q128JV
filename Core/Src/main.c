@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "flash.h"
 #include <stdio.h>
+#include "ff_gen_drv.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,14 +44,12 @@
 SPI_HandleTypeDef hspi2;
 
 /* USER CODE BEGIN PV */
-
 FATFS FatFs;
 FRESULT fres;
 FIL SFLASHPath[];
 char buffer[512];
 char str[100] = {"Hello World\0"};
 int bw;
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -98,39 +97,42 @@ int main(void)
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
   HAL_Delay(100);
-  FATFS_LinkDriver(&USER_Driver, SFLASHPath);
 
-  //Mount drive
-  fres = f_mount(&FatFs, &SFLASHPath, 0);
-  if (fres != FR_OK)
-  {
-    while(1);
-  }
+  //format drive
+    //f_mkfs("", FM_ANY, 0, buffer, sizeof(buffer));
 
+    FATFS_LinkDriver(&USER_Driver, SFLASHPath);
 
-  fres = f_open(&SFLASHPath, "test", FA_CREATE_ALWAYS | FA_WRITE);
-  if (fres != FR_OK)
-  {
- 	 while(1);
-  }
-  else
-  {
-	  fres = f_write(&SFLASHPath, &str, sizeof(str), bw);
-	  fres = f_close(&SFLASHPath);
-  }
+    //Mount drive
+    fres = f_mount(&FatFs, &SFLASHPath, 0);
+    if (fres != FR_OK)
+    {
+      while(1);
+    }
 
 
-  fres = f_open(&SFLASHPath, "test", FA_READ);
-  if (fres != FR_OK)
-  {
-	  while(1);
-  }
-  else
-  {
-	  fres = f_read(&SFLASHPath, &buffer, 11, bw);
-  }
-  f_close(&SFLASHPath);
-  /* USER CODE END 2 */
+    fres = f_open(&SFLASHPath, "test", FA_CREATE_ALWAYS | FA_WRITE);
+    if (fres != FR_OK)
+    {
+   	 while(1);
+    }
+    else
+    {
+  	  fres = f_write(&SFLASHPath, &str, sizeof(str), bw);
+  	  fres = f_close(&SFLASHPath);
+    }
+
+
+    fres = f_open(&SFLASHPath, "test", FA_READ);
+    if (fres != FR_OK)
+    {
+  	  while(1);
+    }
+    else
+    {
+  	  fres = f_read(&SFLASHPath, &buffer, 11, bw);
+    }
+    f_close(&SFLASHPath);  /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -138,7 +140,6 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
