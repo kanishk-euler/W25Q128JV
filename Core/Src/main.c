@@ -98,38 +98,13 @@ int main(void)
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
   HAL_Delay(100);
-  FATFS_LinkDriver(&USER_Driver, SFLASHPath);
+  int jedec_id = Flash_GetChipID();
 
-  //Mount drive
-  fres = f_mount(&FatFs, &SFLASHPath, 0);
-  if (fres != FR_OK)
-  {
-    while(1);
-  }
-
-
-  fres = f_open(&SFLASHPath, "test", FA_CREATE_ALWAYS | FA_WRITE);
-  if (fres != FR_OK)
-  {
- 	 while(1);
-  }
-  else
-  {
-	  fres = f_write(&SFLASHPath, &str, sizeof(str), bw);
-	  fres = f_close(&SFLASHPath);
-  }
-
-
-  fres = f_open(&SFLASHPath, "test", FA_READ);
-  if (fres != FR_OK)
-  {
-	  while(1);
-  }
-  else
-  {
-	  fres = f_read(&SFLASHPath, &buffer, 11, bw);
-  }
-  f_close(&SFLASHPath);
+ uint32_t address_to_write = 0x600000; // Example address, modify as needed
+ char data_to_write[] = "Hello, Euler!"; // Example data
+ Flash_Write_Bytes(address_to_write, data_to_write, sizeof(data_to_write));
+ char data_readback[sizeof(data_to_write)];
+ Flash_Read_Bytes(address_to_write, data_readback, sizeof(data_to_write));
   /* USER CODE END 2 */
 
   /* Infinite loop */
