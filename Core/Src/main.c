@@ -97,6 +97,16 @@ int main(void)
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
   HAL_Delay(100);
+<<<<<<< HEAD
+  int jedec_id = Flash_GetChipID();
+
+ uint32_t address_to_write = 0x600000; // Example address, modify as needed
+ char data_to_write[] = "Hello, Euler!"; // Example data
+ Flash_Write_Bytes(address_to_write, data_to_write, sizeof(data_to_write));
+ char data_readback[sizeof(data_to_write)];
+ Flash_Read_Bytes(address_to_write, data_readback, sizeof(data_to_write));
+  /* USER CODE END 2 */
+=======
 
   //format drive
     //f_mkfs("", FM_ANY, 0, buffer, sizeof(buffer));
@@ -133,6 +143,7 @@ int main(void)
   	  fres = f_read(&SFLASHPath, &buffer, 11, bw);
     }
     f_close(&SFLASHPath);  /* USER CODE END 2 */
+>>>>>>> a3873149a34dc2d032bb39f1a735e5e35f529840
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
