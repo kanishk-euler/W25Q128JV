@@ -19,7 +19,7 @@ uint8_t SPI_Write_Byte(uint8_t data)
 {
 	char read_data;
 
-	HAL_SPI_TransmitReceive(&hspi2, &data, &read_data, 1, 1);
+	HAL_SPI_TransmitReceive_IT(&hspi2, &data, &read_data, 1);
 	return read_data;
 }
 
@@ -60,12 +60,14 @@ void Flash_Write_StatusReg(uint8_t reg)
 void Flash_Write_Enable(void)
 {	FLASH_CS_0();
 	SPI_Write_Byte(CMD_WRITE_ENABLE);
+	Flash_Read_StatusReg();
 	FLASH_CS_1();
 }
 
 void Flash_Write_Disable(void)
 {	FLASH_CS_0();
 	SPI_Write_Byte(CMD_WRITE_DISABLE);
+	Flash_Read_StatusReg();
 	FLASH_CS_1();
 }
 
